@@ -42,8 +42,7 @@ export function TemplateDialog({ template }: { template?: Template }) {
         <DialogHeader>
           <DialogTitle>{template ? "Edit template" : "New template"}</DialogTitle>
           <DialogDescription>
-            Use <code>{"{name}"}</code>, <code>{"{company}"}</code> and <code>{"{role}"}</code> — they&apos;re filled in from the job and
-            recruiter.
+            A reusable draft. Leave blanks like <code>[company]</code> where you&apos;ll fill in details after copying.
           </DialogDescription>
         </DialogHeader>
         <form action={action} className="grid gap-4">

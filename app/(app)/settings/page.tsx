@@ -1,20 +1,12 @@
 import type { Metadata } from "next";
-import { DownloadIcon, LogOutIcon } from "lucide-react";
+import { LogOutIcon } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { env } from "@/lib/env";
 import { logout } from "@/lib/actions/auth";
 import { PageHeader, Section } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Settings" };
-
-const EXPORTS = [
-  { table: "jobs", label: "Jobs" },
-  { table: "contacts", label: "Recruiters" },
-  { table: "activities", label: "Activity & follow-ups" },
-  { table: "templates", label: "Templates" },
-];
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -37,16 +29,6 @@ export default async function SettingsPage() {
               Settings → Environment Variables and redeploy.
             </p>
           </dl>
-        </Section>
-
-        <Section title="Export data (CSV)">
-          <div className="flex flex-wrap gap-2 rounded-xl border bg-background p-4">
-            {EXPORTS.map((e) => (
-              <a key={e.table} href={`/api/export/${e.table}`} className={buttonVariants({ variant: "outline" })} download>
-                <DownloadIcon /> {e.label}
-              </a>
-            ))}
-          </div>
         </Section>
 
         <Section title="Session">

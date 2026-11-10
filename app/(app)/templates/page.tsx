@@ -15,14 +15,14 @@ export default async function TemplatesPage() {
     <>
       <PageHeader
         title="Message templates"
-        description="Reusable messages for recruiters. Fill and copy them from any job page."
+        description="Your drafts for reaching out — connection notes, cold emails, follow-ups."
         actions={<TemplateDialog />}
       />
       {templates.length === 0 ? (
         <EmptyState
           icon={MessageSquareTextIcon}
           title="No templates yet"
-          description="Example: “Hi {name}, I came across the {role} opening at {company} and would love to be considered…”"
+          description="Drafts of how you reach out — a LinkedIn connection note, a cold email, a follow-up. Copy, tweak, send."
         />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">

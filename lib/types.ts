@@ -1,58 +1,39 @@
-import type { ActivityType, ContactStatus, JobStatus, Method, Platform } from "@/lib/constants";
-
-export type Job = {
-  id: string;
-  company: string;
-  title: string;
-  url: string | null;
-  platform: Platform;
-  location: string | null;
-  description: string | null;
-  experience: string | null;
-  salary_range: string | null;
-  status: JobStatus;
-  date_added: string;
-  date_applied: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type JobWithFollowUp = Job & { next_follow_up: string | null };
-
-export type Contact = {
+export type Board = {
   id: string;
   name: string;
-  company: string | null;
-  designation: string | null;
-  linkedin_url: string | null;
-  email: string | null;
-  phone: string | null;
-  notes: string | null;
-  status: ContactStatus;
+  home_url: string | null;
+  sort_order: number;
   created_at: string;
-  updated_at: string;
 };
 
-export type Activity = {
+export type Search = {
   id: string;
-  job_id: string | null;
-  contact_id: string | null;
-  type: ActivityType;
-  title: string | null;
-  body: string | null;
-  method: Method | null;
-  response_received: boolean | null;
-  due_date: string | null;
-  due_time: string | null;
-  completed_at: string | null;
+  board_id: string;
+  name: string;
+  url: string;
+  last_opened_at: string | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
 
-export type ActivityWithRefs = Activity & {
-  job: Pick<Job, "id" | "title" | "company"> | null;
-  contact: Pick<Contact, "id" | "name"> | null;
+export type BoardWithSearches = Board & { searches: Search[] };
+
+export type Resume = {
+  id: string;
+  name: string;
+  storage_path: string;
+  size_bytes: number;
+  is_primary: boolean;
+  created_at: string;
+};
+
+export type ResumeSource = {
+  id: string;
+  name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Template = {

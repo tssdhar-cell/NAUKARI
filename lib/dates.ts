@@ -1,49 +1,36 @@
-// Dates are stored as plain "YYYY-MM-DD" strings (no timezone) and "today" is
-// computed in the app's timezone so overdue/today buckets match the user's day.
-
-export function todayIn(timeZone: string) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(
-    new Date(),
-  );
-}
-
-export function addDays(isoDate: string, days: number) {
-  const d = new Date(`${isoDate}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-export function formatDate(isoDate: string | null | undefined) {
-  if (!isoDate) return "—";
-  const d = new Date(`${isoDate.slice(0, 10)}T00:00:00Z`);
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(d);
-}
-
-export function formatTime(time: string | null | undefined) {
-  if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
-  const suffix = h >= 12 ? "PM" : "AM";
-  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${suffix}`;
+export function formatBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function formatDateTime(iso: string, timeZone: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
+    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
     timeZone,
   }).format(new Date(iso));
 }
 
-/** "Today", "Tomorrow", "3 days overdue", "in 5 days" */
-export function relativeDay(isoDate: string, today: string) {
-  const diff = Math.round(
-    (Date.parse(`${isoDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000,
-  );
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Tomorrow";
-  if (diff === -1) return "Yesterday";
-  if (diff < 0) return `${-diff} days overdue`;
-  return `in ${diff} days`;
+/** "just now", "2h ago", "yesterday", "3 days ago" */
+export function timeAgo(iso: string | null, now = Date.now()) {
+  if (!iso) return null;
+  const mins = Math.round((now - Date.parse(iso)) / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return "yesterday";
+  return `${days} days ago`;
+}
+
+/** Was this timestamp on the current calendar day in the given timezone? */
+export function isToday(iso: string | null, timeZone: string) {
+  if (!iso) return false;
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
+  return fmt.format(new Date(iso)) === fmt.format(new Date());
 }

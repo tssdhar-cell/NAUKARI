@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -32,11 +33,8 @@ function isActive(pathname: string, href: string) {
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-      <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">
-        N
-      </span>
-      Naukari
+    <Link href="/" aria-label="Naukari — dashboard" className="flex items-center">
+      <Image src="/logo.svg" alt="Naukari" width={36} height={36} priority unoptimized />
     </Link>
   );
 }
@@ -51,8 +49,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           href={href}
           onClick={onNavigate}
           className={cn(
-            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-            isActive(pathname, href) && "bg-muted font-medium text-foreground",
+            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            isActive(pathname, href) && "bg-accent font-medium text-accent-foreground",
           )}
         >
           <Icon className="size-4" />

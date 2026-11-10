@@ -102,7 +102,7 @@ export function JobFilters() {
             onClick={() => update({ view: v === "table" ? null : v })}
             className={cn(
               "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors",
-              view === v && "bg-muted font-medium text-foreground",
+              view === v && "bg-accent font-medium text-accent-foreground",
             )}
             aria-pressed={view === v}
           >

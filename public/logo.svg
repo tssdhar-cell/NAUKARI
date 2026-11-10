@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="caseGradient" x1="120" y1="125" x2="400" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4545F5"/>
+      <stop offset="1" stop-color="#3026D9"/>
+    </linearGradient>
+  </defs>
+  <!-- Briefcase handle -->
+  <path d="M190 158V139C190 105.863 216.863 79 250 79H262C295.137 79 322 105.863 322 139V158"
+        stroke="url(#caseGradient)" stroke-width="25" stroke-linecap="round"/>
+  <!-- Briefcase body -->
+  <rect x="94" y="150" width="324" height="218" rx="43" fill="url(#caseGradient)"/>
+  <!-- Friendly smile mark -->
+  <path d="M156 242C177 283 214 307 256 307C298 307 335 283 356 242"
+        stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
+</svg>

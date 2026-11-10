@@ -64,7 +64,7 @@ export function ActivityForm({
             onClick={() => setKind(value)}
             className={cn(
               "flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm whitespace-nowrap text-muted-foreground",
-              kind === value && "bg-background font-medium text-foreground shadow-xs",
+              kind === value && "bg-background font-medium text-primary shadow-xs",
             )}
           >
             <Icon className="size-3.5" /> {label}

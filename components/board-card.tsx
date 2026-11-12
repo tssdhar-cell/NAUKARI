@@ -4,7 +4,7 @@ import * as React from "react";
 import { CopyIcon, ExternalLinkIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteBoard, deleteSearch, duplicateSearch, markOpened } from "@/lib/actions/boards";
-import { describeLinkedIn, hostLabel } from "@/lib/linkedin";
+import { describeSearch, hostLabel } from "@/lib/linkedin";
 import { isToday, timeAgo } from "@/lib/dates";
 import type { Board, BoardWithSearches, Search } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { SearchDialog } from "@/components/search-dialog";
 import { BoardDialog } from "@/components/board-dialog";
+import { SiteLogo } from "@/components/site-logo";
 import { cn } from "@/lib/utils";
 
 type BoardOption = Pick<Board, "id" | "name">;
@@ -35,7 +36,7 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const openedToday = isToday(search.last_opened_at, timeZone);
-  const filters = describeLinkedIn(search.url);
+  const summary = describeSearch(search.url);
 
   function run(fn: () => Promise<{ error?: string }>, ok: string) {
     startTransition(async () => {
@@ -61,9 +62,7 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
       >
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{search.name}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {filters || hostLabel(search.url)}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{summary}</p>
         </div>
         <span
           className={cn(
@@ -127,21 +126,12 @@ export function BoardCard({ board, boards, timeZone }: { board: BoardWithSearche
   const [editOpen, setEditOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
-  const openedToday = board.searches.filter((s) => isToday(s.last_opened_at, timeZone)).length;
 
   return (
     <section className="rounded-2xl border bg-muted/40 p-3 sm:p-4">
       <div className="mb-3 flex items-center gap-2">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-          {board.name.slice(0, 1).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate font-semibold">{board.name}</h2>
-          <p className="text-xs text-muted-foreground">
-            {board.searches.length} tab{board.searches.length === 1 ? "" : "s"}
-            {board.searches.length > 0 && ` · ${openedToday}/${board.searches.length} opened today`}
-          </p>
-        </div>
+        <SiteLogo url={board.home_url ?? board.searches[0]?.url} name={board.name} />
+        <h2 className="min-w-0 flex-1 truncate font-semibold">{board.name}</h2>
         {board.home_url && (
           <a
             href={board.home_url}

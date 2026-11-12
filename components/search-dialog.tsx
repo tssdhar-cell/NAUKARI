@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { saveSearch } from "@/lib/actions/boards";
-import { describeLinkedIn, getKeywords, isLinkedIn, setKeywords } from "@/lib/linkedin";
+import { describeSearch, getKeywords, hostLabel, isLinkedIn, setKeywords } from "@/lib/linkedin";
 import type { Board, FormState, Search } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,8 @@ export function SearchDialog({
   const [url, setUrl] = React.useState(search?.url ?? "");
   const linkedIn = isLinkedIn(url);
   const keywords = linkedIn ? getKeywords(url) : "";
-  const filters = describeLinkedIn(url);
+  const summary = describeSearch(url);
+  const summaryHint = summary && summary !== hostLabel(url) ? `Shows as: ${summary}` : undefined;
 
   const [state, action] = useActionState(async (prev: FormState, fd: FormData) => {
     const res = await saveSearch(prev, fd);
@@ -88,7 +89,7 @@ export function SearchDialog({
             />
           </Field>
 
-          <Field label="Link" htmlFor="search-url" error={err.url} hint={filters ? `LinkedIn filters: ${filters}` : undefined}>
+          <Field label="Link" htmlFor="search-url" error={err.url} hint={summaryHint}>
             <Textarea
               id="search-url"
               name="url"
@@ -118,7 +119,7 @@ export function SearchDialog({
               id="search-name"
               name="name"
               defaultValue={search?.name}
-              placeholder={keywords ? `${keywords}${filters ? ` · ${filters}` : ""}` : "AI Engineer · past 24h"}
+              placeholder={keywords || "AI Engineer"}
               aria-invalid={!!err.name}
               required
             />

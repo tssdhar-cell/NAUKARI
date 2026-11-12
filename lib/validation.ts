@@ -38,11 +38,6 @@ export const templateSchema = z.object({
   body: requiredText("Message", 5000),
 });
 
-export const resumeSourceSchema = z.object({
-  name: requiredText("File name", 120),
-  content: z.string().max(200_000, "Source is too large (200k characters max)"),
-});
-
 /** FormData → plain object of strings. */
 export function formToObject(formData: FormData) {
   const obj: Record<string, string> = {};

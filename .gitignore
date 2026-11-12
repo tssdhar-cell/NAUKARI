@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# never ship or commit personal PDFs dropped here for import
+public/*.pdf

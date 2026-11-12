@@ -41,36 +41,85 @@ export function cleanUrl(url: string) {
   return u.toString();
 }
 
-/** Short human label for a LinkedIn filter set, e.g. "past 24h · under 10 applicants · remote". */
+const WORK_TYPE: Record<string, string> = { "1": "on-site", "2": "remote", "3": "hybrid" };
+const JOB_TYPE: Record<string, string> = { F: "full-time", P: "part-time", C: "contract", T: "temp", I: "internship" };
+const EXPERIENCE: Record<string, string> = {
+  "1": "intern",
+  "2": "entry",
+  "3": "associate",
+  "4": "mid-senior",
+  "5": "director",
+  "6": "exec",
+};
+
+function mapList(value: string, map: Record<string, string>) {
+  return value.split(",").map((x) => map[x] ?? x).join("/");
+}
+
+/** LinkedIn f_TPR=r86400 becomes "24 hours"; r604800 becomes "7 days". */
+function timeWindow(tpr: string) {
+  const secs = Number(tpr.replace(/^r/, ""));
+  if (!secs || secs < 0) return "";
+  const hours = Math.round(secs / 3600);
+  if (hours <= 24) return hours <= 1 ? "1 hour" : `${hours} hours`;
+  const days = Math.round(secs / 86400);
+  return days === 1 ? "1 day" : `${days} days`;
+}
+
+/** Plain-words summary of a LinkedIn search, e.g. "AI Engineer, 24 hours, under 10, remote". */
 export function describeLinkedIn(url: string) {
   const u = parseUrl(url);
   if (!u || !isLinkedIn(url)) return "";
   const p = u.searchParams;
   const parts: string[] = [];
+
+  const kw = p.get("keywords")?.trim();
+  if (kw) parts.push(kw);
+
   const tpr = p.get("f_TPR");
   if (tpr) {
-    const secs = Number(tpr.replace(/^r/, ""));
-    if (secs === 86400) parts.push("past 24h");
-    else if (secs === 604800) parts.push("past week");
-    else if (secs === 2592000) parts.push("past month");
-    else if (secs) parts.push(`past ${Math.round(secs / 3600)}h`);
+    const w = timeWindow(tpr);
+    if (w) parts.push(w);
   }
-  if (p.get("f_EA") === "true") parts.push("under 10 applicants");
+  if (p.get("f_EA") === "true") parts.push("under 10");
   if (p.get("f_AL") === "true") parts.push("easy apply");
+
   const wt = p.get("f_WT");
-  if (wt) {
-    const map: Record<string, string> = { "1": "on-site", "2": "remote", "3": "hybrid" };
-    parts.push(wt.split(",").map((x) => map[x] ?? x).join("/"));
-  }
+  if (wt) parts.push(mapList(wt, WORK_TYPE));
+  const jt = p.get("f_JT");
+  if (jt) parts.push(mapList(jt, JOB_TYPE));
   const exp = p.get("f_E");
-  if (exp) {
-    const map: Record<string, string> = { "1": "intern", "2": "entry", "3": "associate", "4": "mid-senior", "5": "director", "6": "exec" };
-    parts.push(exp.split(",").map((x) => map[x] ?? x).join("/"));
-  }
-  return parts.join(" · ");
+  if (exp) parts.push(mapList(exp, EXPERIENCE));
+
+  const loc = p.get("location")?.trim();
+  if (loc) parts.push(loc);
+  if (p.get("sortBy") === "DD") parts.push("newest first");
+
+  return parts.join(", ");
+}
+
+// Query params job sites commonly use for the search text.
+const KEYWORD_PARAMS = ["keywords", "q", "k", "query", "search", "text"];
+
+/** One-line summary of any saved search: LinkedIn filters in plain words, otherwise "keywords, host". */
+export function describeSearch(url: string) {
+  const u = parseUrl(url);
+  if (!u) return "";
+  if (isLinkedIn(url)) return describeLinkedIn(url) || hostLabel(url);
+  const kw = KEYWORD_PARAMS.map((k) => u.searchParams.get(k)?.trim()).find(Boolean);
+  return [kw, hostLabel(url)].filter(Boolean).join(", ");
 }
 
 export function hostLabel(url: string) {
   const u = parseUrl(url);
   return u ? u.hostname.replace(/^www\./, "") : "";
+}
+
+/**
+ * The site favicon via Google's favicon service.
+ * Sites rarely serve /favicon.ico at a predictable path, and this needs no server code.
+ */
+export function faviconUrl(url: string | null | undefined, size = 64) {
+  const host = url ? hostLabel(url) : "";
+  return host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=${size}` : null;
 }

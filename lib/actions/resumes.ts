@@ -3,11 +3,10 @@
 import { db } from "@/lib/supabase";
 import { requireSession } from "@/lib/session";
 import { getResume } from "@/lib/data";
-import { formToObject, resumeSourceSchema, uuid } from "@/lib/validation";
-import { dbError, refreshAll, throwIf, validationError } from "@/lib/actions/helpers";
+import { uuid } from "@/lib/validation";
+import { dbError, refreshAll, throwIf } from "@/lib/actions/helpers";
 import { RESUME_BUCKET } from "@/lib/storage";
 import type { FormState } from "@/lib/types";
-
 
 export async function setPrimaryResume(id: string): Promise<FormState> {
   await requireSession();
@@ -45,37 +44,6 @@ export async function deleteResume(id: string): Promise<FormState> {
     const rm = await db().storage.from(RESUME_BUCKET).remove([r.storage_path]);
     if (rm.error) throw new Error(rm.error.message);
     throwIf(await db().from("resumes").delete().eq("id", id));
-  } catch (e) {
-    return dbError(e);
-  }
-  refreshAll();
-  return { ok: true };
-}
-
-export async function saveResumeSource(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
-  const raw = formToObject(formData);
-  const id = raw.id ? uuid.safeParse(raw.id) : null;
-  if (id && !id.success) return { error: "Invalid id." };
-
-  const parsed = resumeSourceSchema.safeParse(raw);
-  if (!parsed.success) return validationError(parsed.error);
-
-  try {
-    if (id?.success) throwIf(await db().from("resume_sources").update(parsed.data).eq("id", id.data));
-    else throwIf(await db().from("resume_sources").insert(parsed.data));
-  } catch (e) {
-    return dbError(e);
-  }
-  refreshAll();
-  return { ok: true };
-}
-
-export async function deleteResumeSource(id: string): Promise<FormState> {
-  await requireSession();
-  if (!uuid.safeParse(id).success) return { error: "Invalid id." };
-  try {
-    throwIf(await db().from("resume_sources").delete().eq("id", id));
   } catch (e) {
     return dbError(e);
   }

@@ -28,14 +28,6 @@ export type Resume = {
   created_at: string;
 };
 
-export type ResumeSource = {
-  id: string;
-  name: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-};
-
 export type Template = {
   id: string;
   name: string;

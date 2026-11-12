@@ -9,15 +9,12 @@ import { SearchDialog } from "@/components/search-dialog";
 export default async function BoardsPage() {
   const boards = await getBoards();
   const options = boards.map((b) => ({ id: b.id, name: b.name }));
-  const total = boards.reduce((n, b) => n + b.searches.length, 0);
 
   return (
     <>
       <PageHeader
         title="Boards"
-        description={
-          total ? `${total} saved search${total === 1 ? "" : "es"} — tap one to open it in a new tab` : "Your saved job searches, one tap away"
-        }
+        description="Your saved job searches, one tap away"
         actions={
           <>
             <BoardDialog />

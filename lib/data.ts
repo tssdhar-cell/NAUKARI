@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/supabase";
-import type { Board, BoardWithSearches, Resume, ResumeSource, Search, Template } from "@/lib/types";
+import type { Board, BoardWithSearches, Resume, Search, Template } from "@/lib/types";
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -25,7 +25,7 @@ export async function getSearch(id: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Resumes
+// Resumes (PDF versions)
 // ---------------------------------------------------------------------------
 export async function getResumes() {
   const res = await db().from("resumes").select("*").order("is_primary", { ascending: false }).order("created_at", { ascending: false });
@@ -35,11 +35,6 @@ export async function getResumes() {
 export async function getResume(id: string) {
   const res = await db().from("resumes").select("*").eq("id", id).maybeSingle();
   return unwrap(res) as Resume | null;
-}
-
-export async function getResumeSources() {
-  const res = await db().from("resume_sources").select("*").order("created_at");
-  return unwrap(res) as ResumeSource[];
 }
 
 // ---------------------------------------------------------------------------

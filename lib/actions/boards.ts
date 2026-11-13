@@ -2,10 +2,11 @@
 
 import { db } from "@/lib/supabase";
 import { requireSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 import { getSearch } from "@/lib/data";
 import { cleanUrl } from "@/lib/linkedin";
 import { boardSchema, formToObject, searchSchema, uuid } from "@/lib/validation";
-import { dbError, refreshAll, throwIf, validationError } from "@/lib/actions/helpers";
+import { dbError, throwIf, validationError } from "@/lib/actions/helpers";
 import type { FormState } from "@/lib/types";
 
 export async function saveBoard(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -27,7 +28,7 @@ export async function saveBoard(_prev: FormState, formData: FormData): Promise<F
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -39,7 +40,7 @@ export async function deleteBoard(id: string): Promise<FormState> {
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -69,7 +70,7 @@ export async function saveSearch(_prev: FormState, formData: FormData): Promise<
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -85,7 +86,7 @@ export async function duplicateSearch(id: string): Promise<FormState & { id?: st
       .select("id")
       .single();
     throwIf(res);
-    refreshAll();
+    revalidatePath("/");
     return { ok: true, id: res.data!.id };
   } catch (e) {
     return dbError(e);
@@ -100,7 +101,7 @@ export async function deleteSearch(id: string): Promise<FormState> {
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -113,6 +114,7 @@ export async function markOpened(id: string): Promise<FormState> {
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  // The client updates the timestamp optimistically. Avoid re-rendering the
+  // entire route for a background analytics-style write.
   return { ok: true };
 }

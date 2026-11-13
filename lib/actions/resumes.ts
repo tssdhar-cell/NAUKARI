@@ -2,9 +2,10 @@
 
 import { db } from "@/lib/supabase";
 import { requireSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 import { getResume } from "@/lib/data";
 import { uuid } from "@/lib/validation";
-import { dbError, refreshAll, throwIf } from "@/lib/actions/helpers";
+import { dbError, throwIf } from "@/lib/actions/helpers";
 import { RESUME_BUCKET } from "@/lib/storage";
 import type { FormState } from "@/lib/types";
 
@@ -12,12 +13,11 @@ export async function setPrimaryResume(id: string): Promise<FormState> {
   await requireSession();
   if (!uuid.safeParse(id).success) return { error: "Invalid resume id." };
   try {
-    throwIf(await db().from("resumes").update({ is_primary: false }).eq("is_primary", true));
-    throwIf(await db().from("resumes").update({ is_primary: true }).eq("id", id));
+    throwIf(await db().rpc("set_primary_resume", { p_resume_id: id }));
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/resume");
   return { ok: true };
 }
 
@@ -31,7 +31,7 @@ export async function renameResume(id: string, name: string): Promise<FormState>
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/resume");
   return { ok: true };
 }
 
@@ -47,6 +47,6 @@ export async function deleteResume(id: string): Promise<FormState> {
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/resume");
   return { ok: true };
 }

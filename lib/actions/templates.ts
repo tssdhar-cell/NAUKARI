@@ -2,8 +2,9 @@
 
 import { db } from "@/lib/supabase";
 import { requireSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 import { formToObject, templateSchema, uuid } from "@/lib/validation";
-import { dbError, refreshAll, throwIf, validationError } from "@/lib/actions/helpers";
+import { dbError, throwIf, validationError } from "@/lib/actions/helpers";
 import type { FormState } from "@/lib/types";
 
 export async function saveTemplate(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -21,7 +22,7 @@ export async function saveTemplate(_prev: FormState, formData: FormData): Promis
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/templates");
   return { ok: true };
 }
 
@@ -33,6 +34,6 @@ export async function deleteTemplate(id: string): Promise<FormState> {
   } catch (e) {
     return dbError(e);
   }
-  refreshAll();
+  revalidatePath("/templates");
   return { ok: true };
 }

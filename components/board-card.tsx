@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { deleteBoard, deleteSearch, duplicateSearch, markOpened } from "@/lib/actions/boards";
 import { describeSearch, hostLabel } from "@/lib/linkedin";
 import { isToday, timeAgo } from "@/lib/dates";
-import type { Board, BoardWithSearches, Search } from "@/lib/types";
+import type { BoardWithSearches, Search } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,19 +24,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { SearchDialog } from "@/components/search-dialog";
 import { BoardDialog } from "@/components/board-dialog";
 import { SiteLogo } from "@/components/site-logo";
 import { cn } from "@/lib/utils";
 
-type BoardOption = Pick<Board, "id" | "name">;
-
-function SearchTab({ search, boards, timeZone }: { search: Search; boards: BoardOption[]; timeZone: string }) {
-  const [editOpen, setEditOpen] = React.useState(false);
+function SearchTab({ search, onEdit, timeZone }: { search: Search; onEdit: () => void; timeZone: string }) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
-  const openedToday = isToday(search.last_opened_at, timeZone);
+  const [localOpened, setLocalOpened] = React.useState<string | null>(null);
+  const opening = React.useRef(false);
+  const lastOpened = localOpened ?? search.last_opened_at;
+  const openedToday = isToday(lastOpened, timeZone);
   const summary = describeSearch(search.url);
+
+  async function trackOpened() {
+    if (opening.current) return;
+    opening.current = true;
+    const previous = localOpened;
+    setLocalOpened(new Date().toISOString());
+    try {
+      const result = await markOpened(search.id);
+      if (result.error) throw new Error(result.error);
+    } catch {
+      setLocalOpened(previous);
+      toast.error("Search opened, but its opened status could not be saved.");
+    } finally {
+      opening.current = false;
+    }
+  }
 
   function run(fn: () => Promise<{ error?: string }>, ok: string) {
     startTransition(async () => {
@@ -57,7 +72,7 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
         href={search.url}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() => startTransition(() => markOpened(search.id).then(() => undefined))}
+        onClick={() => { void trackOpened(); }}
         className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3"
       >
         <div className="min-w-0 flex-1">
@@ -70,7 +85,7 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
             openedToday ? "font-medium text-primary" : "text-muted-foreground",
           )}
         >
-          {search.last_opened_at ? `opened ${timeAgo(search.last_opened_at)}` : "not opened yet"}
+          {lastOpened ? `opened ${timeAgo(lastOpened)}` : "not opened yet"}
         </span>
         <ExternalLinkIcon className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
       </a>
@@ -82,7 +97,7 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
           <MoreHorizontalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
+          <DropdownMenuItem onClick={onEdit}>
             <PencilIcon /> Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => run(() => duplicateSearch(search.id), "Duplicated — edit the copy")} disabled={pending}>
@@ -95,7 +110,6 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <SearchDialog boards={boards} search={search} open={editOpen} onOpenChange={setEditOpen} />
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -122,10 +136,11 @@ function SearchTab({ search, boards, timeZone }: { search: Search; boards: Board
   );
 }
 
-export function BoardCard({ board, boards, timeZone }: { board: BoardWithSearches; boards: BoardOption[]; timeZone: string }) {
+export function BoardCard({ board, totalSearches, onAddSearch, onEditSearch, timeZone }: { board: BoardWithSearches; totalSearches: number; onAddSearch: () => void; onEditSearch: (search: Search) => void; timeZone: string }) {
   const [editOpen, setEditOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
+  const [visibleCount, setVisibleCount] = React.useState(10);
 
   return (
     <section className="rounded-2xl border bg-muted/40 p-3 sm:p-4">
@@ -142,7 +157,7 @@ export function BoardCard({ board, boards, timeZone }: { board: BoardWithSearche
             {hostLabel(board.home_url)} <ExternalLinkIcon className="size-3" />
           </a>
         )}
-        <SearchDialog boards={boards} boardId={board.id} />
+        <Button variant="outline" size="sm" onClick={onAddSearch}><PlusIcon /> Tab</Button>
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Board options" />}>
             <MoreHorizontalIcon />
@@ -163,25 +178,18 @@ export function BoardCard({ board, boards, timeZone }: { board: BoardWithSearche
         <div className="rounded-xl border border-dashed bg-background/60 px-4 py-6 text-center text-sm text-muted-foreground">
           No tabs yet. Set up a search on {board.name}, copy the page link, and add it as a tab.
           <div className="mt-3">
-            <SearchDialog
-              boards={boards}
-              boardId={board.id}
-              trigger={<Button size="sm" />}
-              triggerLabel={
-                <>
-                  <PlusIcon /> Add first tab
-                </>
-              }
-            />
+            <Button size="sm" onClick={onAddSearch}><PlusIcon /> Add first tab</Button>
           </div>
         </div>
       ) : (
         <ul className="grid gap-2">
-          {board.searches.map((s) => (
-            <SearchTab key={s.id} search={s} boards={boards} timeZone={timeZone} />
+          {board.searches.slice(0, visibleCount).map((s) => (
+            <SearchTab key={s.id} search={s} onEdit={() => onEditSearch(s)} timeZone={timeZone} />
           ))}
         </ul>
       )}
+
+      {board.searches.length > visibleCount && <Button className="mt-3" variant="outline" onClick={() => setVisibleCount((count) => count + 10)}>Show more tabs ({board.searches.length - visibleCount} remaining)</Button>}
 
       <BoardDialog board={board} open={editOpen} onOpenChange={setEditOpen} />
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -189,7 +197,7 @@ export function BoardCard({ board, boards, timeZone }: { board: BoardWithSearche
           <AlertDialogHeader>
             <AlertDialogTitle>Delete “{board.name}”?</AlertDialogTitle>
             <AlertDialogDescription>
-              This also deletes its {board.searches.length} tab{board.searches.length === 1 ? "" : "s"}.
+              This also deletes its {totalSearches} tab{totalSearches === 1 ? "" : "s"}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

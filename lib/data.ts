@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/supabase";
 import type { Board, BoardWithSearches, Resume, Search, Template } from "@/lib/types";
+import { groupSearches } from "@/components/collection-utils";
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -15,8 +16,7 @@ export async function getBoards(): Promise<BoardWithSearches[]> {
     db().from("boards").select("*").order("sort_order").order("created_at"),
     db().from("searches").select("*").order("sort_order").order("created_at"),
   ]);
-  const all = unwrap(searches) as Search[];
-  return (unwrap(boards) as Board[]).map((b) => ({ ...b, searches: all.filter((s) => s.board_id === b.id) }));
+  return groupSearches(unwrap(boards) as Board[], unwrap(searches) as Search[]);
 }
 
 export async function getSearch(id: string) {

@@ -1,5 +1,4 @@
 import "server-only";
-import { revalidatePath } from "next/cache";
 import type { z } from "zod";
 import type { FormState } from "@/lib/types";
 
@@ -16,11 +15,6 @@ export function dbError(e: unknown): FormState {
   console.error(e);
   const message = e instanceof Error ? e.message : String(e);
   return { error: `Could not save: ${message}` };
-}
-
-/** Pages are all dynamic; refresh every route so lists, counts and details stay in sync. */
-export function refreshAll() {
-  revalidatePath("/", "layout");
 }
 
 export function throwIf(res: { error: { message: string } | null }) {

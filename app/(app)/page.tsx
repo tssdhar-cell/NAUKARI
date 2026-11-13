@@ -2,13 +2,13 @@ import { LayoutGridIcon } from "lucide-react";
 import { getBoards } from "@/lib/data";
 import { env } from "@/lib/env";
 import { EmptyState, PageHeader } from "@/components/page-header";
-import { BoardCard } from "@/components/board-card";
+import { BoardsView } from "@/components/boards-view";
 import { BoardDialog } from "@/components/board-dialog";
-import { SearchDialog } from "@/components/search-dialog";
 
 export default async function BoardsPage() {
   const boards = await getBoards();
-  const options = boards.map((b) => ({ id: b.id, name: b.name }));
+
+  if (boards.length) return <BoardsView boards={boards} timeZone={env().APP_TIMEZONE} />;
 
   return (
     <>
@@ -18,7 +18,6 @@ export default async function BoardsPage() {
         actions={
           <>
             <BoardDialog />
-            {boards.length > 0 && <SearchDialog boards={options} />}
           </>
         }
       />
@@ -30,13 +29,7 @@ export default async function BoardsPage() {
           description="Add a board for each site you search on (LinkedIn, Naukri, Indeed…), then save your searches as tabs."
           action={<BoardDialog />}
         />
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {boards.map((b) => (
-            <BoardCard key={b.id} board={b} boards={options} timeZone={env().APP_TIMEZONE} />
-          ))}
-        </div>
-      )}
+      ) : null}
     </>
   );
 }
